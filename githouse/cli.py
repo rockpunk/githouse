@@ -1,5 +1,4 @@
 import click
-import copy
 import collections
 import datetime as dt
 import dateutil.relativedelta as rd
@@ -185,7 +184,7 @@ def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **k
                     report["total_stories"] = len(report["stories"])
                     report["total_prs"] = sum([len(v["prs"]) for k,v in report["stories"].items()]) + len(report["misc_prs"])
 
-                    user_report[last_user] = copy.deepcopy(report)
+                    user_report[last_user] = report
                     report = empty_report()
                 logger.debug("Processing PRs for %s", author)
                 last_user = author
