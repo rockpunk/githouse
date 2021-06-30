@@ -133,8 +133,8 @@ def users(ctx, opts, *args, **kwds):
 #@click.option('-u', '--user', multiple=True, help='The user to limit by.')
 #@click.option('-p', '--project', help='An optional project to limit by')
 @click.option('-s','--state', help="The state the PR should be in.", type=click.Choice(["merged","closed","updated","created"]), default="merged")
-@click.option('--start-date', metavar='YYYY-MM-DD', required=False)
-@click.option('--end-date', metavar='YYYY-MM-DD', required=False)
+@click.option('--start-date', metavar='YYYY-MM-DD', help="Start of date range for PRs to consider. Defaults to Monday of this week.")
+@click.option('--end-date', metavar='YYYY-MM-DD', help="End of date range for PRs to consider. Defaults to today.")
 @click.option('-o', '--outfile', help='Save json report data to OUTFILE', type=click.Path())
 @click.option('-f', '--filename', help='A file to read an already pulled report from. This avoids hitting github and clubhouse again', type=click.Path(exists=True))
 @pass_opts
@@ -142,6 +142,22 @@ def users(ctx, opts, *args, **kwds):
 def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **kwds):
     '''
     List stories completed in last week.
+
+    This will find all PRs that have been merged in the date range specified.
+    Please keep in mind that a long date range (or a large # of PRs) will cause
+    a large amount of network IO to and from github and clubhouse APIs. This will
+    hit github once for each 30 PRs returned for search, once to get the team members,
+    as well as once per each PR.
+
+    So, if you have a 100PRs merged in a daterange, this script will hit the Github API
+    105 times, and the clubhouse API 100 times. (This is unfortunately necessary to get
+    the branch name for each PR, and story metadata from clubhouse.) A github access
+    token should allow for up to 5000 requests / hour, and Clubhouse allows up to
+    200 requests per minute. You _should_ be fine. I use this regularly for a team of 12
+    people, with ~100 PRs in a busy week.
+
+    If for some reason you do get throttled, use a smaller date range (or a less
+    productive team! ;) )
     '''
 
     if not filename:
