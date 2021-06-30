@@ -230,9 +230,9 @@ def report(ctx, opts, start_date, end_date, user, project, state, filename, outf
             user_report = report["report"]
             members = report["members"]
 
+    pretty_team = re.sub(r"[_-]+"," ", opts.gh_team).title()
 
-
-    click.secho(f"# Data Eng Updates {start_date} - {end_date}")
+    click.secho(f"# {pretty_name} Updates {start_date} - {end_date}")
 
     for author in sorted(members):
         report = user_report.get(author, empty_report())
