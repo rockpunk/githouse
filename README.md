@@ -52,6 +52,15 @@ These can all be set in environment variables:
 
 ```
 
+The generated md is perfect for sharing in a gist. The [github cli](https://cli.github.com) is awesome, btw:
+
+```
+    $ githouse report --gh-team my-team | gh gist create -f my_team_updates.md -
+    - Creating gist my_team_updates.md
+    ✓ Created gist my_team_updates.md
+    https://gist.github.com/<your_gist>
+```
+
 ### Store a markdown report json for further manip
 
 ```
