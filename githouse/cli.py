@@ -131,8 +131,8 @@ def users(ctx, opts, *args, **kwds):
 @Options.gh_team_opt()
 @Options.verbose_opt()
 @Options.ch_token_opt()
-@click.option('-u', '--user', multiple=True, help='The user to limit by.')
-@click.option('-p', '--project', help='An optional project to limit by')
+#@click.option('-u', '--user', multiple=True, help='The user to limit by.')
+#@click.option('-p', '--project', help='An optional project to limit by')
 @click.option('-s','--state', help="The state the PR should be in.", type=click.Choice(["merged","closed","updated","created"]), default="merged")
 @click.option('--start-date', metavar='YYYY-MM-DD', required=False)
 @click.option('--end-date', metavar='YYYY-MM-DD', required=False)
@@ -140,7 +140,7 @@ def users(ctx, opts, *args, **kwds):
 @click.option('-f', '--filename', help='A file to read an already pulled report from. This avoids hitting github and clubhouse again', type=click.Path(exists=True))
 @pass_opts
 @click.pass_context
-def report(ctx, opts, start_date, end_date, user, project, state, filename, outfile, *args, **kwds):
+def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **kwds):
     '''
     List stories completed in last week.
     '''
@@ -201,6 +201,7 @@ def report(ctx, opts, start_date, end_date, user, project, state, filename, outf
                 logger.info("PR Branch = %s", branch)
 
             assert pr_obj, "PR object should be returned"
+            assert branch, "Each PR should have a branch"
 
             m = story_re.search(branch)
             if m:
