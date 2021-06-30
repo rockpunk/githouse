@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "githouse"
+version = "0.1.0"
+description = "cli to generate a markdown report for recent employee updates"
+authors = ["Stephen Layland <slayland@tubi.tv>"]
+
+[tool.poetry.scripts]
+githouse = "githouse.cli:cli"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+requests = "^2.25.1"
+PyGithub = "^1.55"
+click = "^7.0"
+python-dateutil = "^2.8.1"
+
+[tool.poetry.dev-dependencies]
+pre-commit = "^2.13.0"
+black = "^21.6b0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
