@@ -233,7 +233,7 @@ def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **k
 
     pretty_team = re.sub(r"[_-]+"," ", opts.gh_team).title()
 
-    click.secho(f"# {pretty_name} Updates {start_date} - {end_date}")
+    click.secho(f"# {pretty_team} Updates {start_date} - {end_date}")
 
     for author in sorted(members):
         report = user_report.get(author, empty_report())
