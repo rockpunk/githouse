@@ -22,6 +22,20 @@ These can all be set in environment variables:
 - `GH_TEAM`
 - `GH_ORG`
 
+## Installation
+
+Can run directly in virtualenv w/
+
+    $ pip install poetry
+    $ poetry install
+    $ poetry run githouse -h
+
+Or, if you prefer to install locally:
+
+    $ poetry build
+    $ pip install dist/githouse-0.1.0-py3-none-any.whl
+    $ githouse -h
+
 ## Usage
 
 ### List the github members of a team
