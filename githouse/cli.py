@@ -13,6 +13,7 @@ import requests
 logging.basicConfig()
 logger = logging.getLogger()
 
+
 class Options:
     gh_token = None
     gh_team = None
@@ -41,41 +42,41 @@ class Options:
     @staticmethod
     def gh_org_opt():
         return click.option(
-            '--gh-org',
-            help='The github organization to use',
+            "--gh-org",
+            help="The github organization to use",
             envvar="GH_ORG",
             show_envvar=True,
-            callback=Options.set_thing('gh_org')
+            callback=Options.set_thing("gh_org"),
         )
 
     @staticmethod
     def gh_token_opt():
         return click.option(
-            '--gh-token',
-            help='The github access token to use',
+            "--gh-token",
+            help="The github access token to use",
             envvar="GH_TOKEN",
             show_envvar=True,
-            callback=Options.set_thing('gh_token')
+            callback=Options.set_thing("gh_token"),
         )
 
     @staticmethod
     def gh_team_opt():
         return click.option(
-            '--gh-team',
-            help='The github team to use',
-            envvar='GH_TEAM',
+            "--gh-team",
+            help="The github team to use",
+            envvar="GH_TEAM",
             show_envvar=True,
-            callback=Options.set_thing('gh_team')
+            callback=Options.set_thing("gh_team"),
         )
 
     @staticmethod
     def ch_token_opt():
         return click.option(
-            '--ch-token',
-            help='The github access token to use',
+            "--ch-token",
+            help="The github access token to use",
             envvar="CH_TOKEN",
             show_envvar=True,
-            callback=Options.set_thing('ch_token')
+            callback=Options.set_thing("ch_token"),
         )
 
     @staticmethod
@@ -91,14 +92,16 @@ class Options:
     def set_verbose(self, val, **kwds):
         self.verbose = val
         lev = "WARNING"
-        if val>1:
+        if val > 1:
             lev = "DEBUG"
         else:
             lev = "INFO"
         logger.setLevel(lev)
         return self.verbose
 
+
 pass_opts = click.make_pass_decorator(Options, ensure=True)
+
 
 @click.group("manager", context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option()
@@ -130,17 +133,38 @@ def users(ctx, opts, *args, **kwds):
 @Options.gh_team_opt()
 @Options.verbose_opt()
 @Options.ch_token_opt()
-#@click.option('-u', '--user', multiple=True, help='The user to limit by.')
-#@click.option('-p', '--project', help='An optional project to limit by')
-@click.option('-s','--state', help="The state the PR should be in.", type=click.Choice(["merged","closed","updated","created"]), default="merged")
-@click.option('--start-date', metavar='YYYY-MM-DD', help="Start of date range for PRs to consider. Defaults to Monday of this week.")
-@click.option('--end-date', metavar='YYYY-MM-DD', help="End of date range for PRs to consider. Defaults to today.")
-@click.option('-o', '--outfile', help='Save json report data to OUTFILE', type=click.Path())
-@click.option('-f', '--filename', help='A file to read an already pulled report from. This avoids hitting github and clubhouse again', type=click.Path(exists=True))
+# @click.option('-u', '--user', multiple=True, help='The user to limit by.')
+# @click.option('-p', '--project', help='An optional project to limit by')
+@click.option(
+    "-s",
+    "--state",
+    help="The state the PR should be in.",
+    type=click.Choice(["merged", "closed", "updated", "created"]),
+    default="merged",
+)
+@click.option(
+    "--start-date",
+    metavar="YYYY-MM-DD",
+    help="Start of date range for PRs to consider. Defaults to Monday of this week.",
+)
+@click.option(
+    "--end-date",
+    metavar="YYYY-MM-DD",
+    help="End of date range for PRs to consider. Defaults to yesterday.",
+)
+@click.option(
+    "-o", "--outfile", help="Save json report data to OUTFILE", type=click.Path()
+)
+@click.option(
+    "-f",
+    "--filename",
+    help="A file to read an already pulled report from. This avoids hitting github and clubhouse again",
+    type=click.Path(exists=True),
+)
 @pass_opts
 @click.pass_context
 def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **kwds):
-    '''
+    """
     List stories completed in last week.
 
     This will find all PRs that have been merged in the date range specified.
@@ -158,7 +182,7 @@ def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **k
 
     If for some reason you do get throttled, use a smaller date range (or a less
     productive team! ;) )
-    '''
+    """
 
     if not filename:
         if not opts.ch_token:
@@ -170,35 +194,37 @@ def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **k
 
         today = dt.datetime.now()
         if not start_date:
-            if today.weekday()==0:
+            if today.weekday() == 0:
                 start_date = today - rd.relativedelta(days=7)
             else:
                 start_date = today - rd.relativedelta(days=today.weekday())
             start_date = start_date.strftime("%Y-%m-%d")
         if not end_date:
-            end_date = today.strftime("%Y-%m-%d")
+            end_date = (today - rd.relativedelta(days=1)).strftime("%Y-%m-%d")
 
         q = f"type:pr org:{opts.gh_org} {state}:{start_date}..{end_date} {author_query}"
         logger.info("Github PR query: %s", q)
 
         # work around pygithub's request-happy arch + bug not supporting repeated qualifiers
-        returned_prs = [pr for pr in hit_gh(opts, "/search/issues", data={"q":q})]
+        returned_prs = [pr for pr in hit_gh(opts, "/search/issues", data={"q": q})]
 
         logger.warning("Total of %s PRs returned", len(returned_prs))
 
-        last_user=""
+        last_user = ""
         user_report = collections.defaultdict(lambda: [])
 
         report = empty_report()
 
         # 'user': { 'stories': {'123': { 'id':ch123, 'name': 'fix stuff', 'type':'bug', prs=[] }, ... }, 'misc_prs': [ ... ], 'total_prs':4, 'total_stories':2 }
-        for pr in sorted(returned_prs, key= lambda x: rget(x, "user.login")):
+        for pr in sorted(returned_prs, key=lambda x: rget(x, "user.login")):
             author = rget(pr, "user.login")
             if author != last_user:
                 if last_user:
                     logger.debug("Storing report for %s", last_user)
                     report["total_stories"] = len(report["stories"])
-                    report["total_prs"] = sum([len(v["prs"]) for k,v in report["stories"].items()]) + len(report["misc_prs"])
+                    report["total_prs"] = sum(
+                        [len(v["prs"]) for k, v in report["stories"].items()]
+                    ) + len(report["misc_prs"])
 
                     user_report[last_user] = report
                     report = empty_report()
@@ -206,11 +232,10 @@ def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **k
                 last_user = author
 
             pr_uri = rget(pr, "pull_request.url")
-            if not pr_uri:
-                raise RuntimeError("Invalid PR!")
+            assert pr_uri, "Each PR should have a URL"
 
             branch = ""
-            for pr_obj in hit_gh(opts,uri=pr_uri):
+            for pr_obj in hit_gh(opts, uri=pr_uri):
                 logger.debug(pr_obj)
                 branch = rget(pr_obj, "head.ref")
                 logger.info("PR Branch = %s", branch)
@@ -220,7 +245,7 @@ def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **k
 
             m = story_re.search(branch)
             if m:
-                story_id = m.group('story_id').strip('ch')
+                story_id = m.group("story_id").strip("ch")
                 story = hit_ch(opts, api=f"stories/{story_id}")
 
                 if story_id not in report["stories"]:
@@ -231,13 +256,14 @@ def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **k
 
         # store the last user's report
         report["total_stories"] = len(report["stories"])
-        report["total_prs"] = sum([len(v["prs"]) for k,v in report["stories"].items()]) + len(report["misc_prs"])
+        report["total_prs"] = sum(
+            [len(v["prs"]) for k, v in report["stories"].items()]
+        ) + len(report["misc_prs"])
         user_report[last_user] = report
-
 
         if outfile:
             with open(outfile, "w") as f:
-                dump = { "members":members, "report":user_report }
+                dump = {"members": members, "report": user_report}
                 f.write(json.dumps(dump))
             logger.warning("Full report saved to %s", outfile)
     else:
@@ -246,43 +272,46 @@ def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **k
             user_report = report["report"]
             members = report["members"]
 
-    pretty_team = re.sub(r"[_-]+"," ", opts.gh_team).title()
+    pretty_team = re.sub(r"[_-]+", " ", opts.gh_team).title()
 
     click.secho(f"# {pretty_team} Updates {start_date} - {end_date}")
 
     for author in sorted(members):
         report = user_report.get(author, empty_report())
-        ies = "ies" if report["total_stories"]!=1 else "y"
-        s = "s" if report["total_prs"]!=1 else ""
+        ies = "ies" if report["total_stories"] != 1 else "y"
+        s = "s" if report["total_prs"] != 1 else ""
 
-        click.secho(f"\n## {author} ({report['total_stories']} Stor{ies}; {report['total_prs']} PR{s})", bold=True)
+        click.secho(
+            f"\n## {author} ({report['total_stories']} Stor{ies}; {report['total_prs']} PR{s})",
+            bold=True,
+        )
         for story_id, story in report["stories"].items():
             title = f"[{story['story_type'].capitalize()} ch{story_id}]({story['app_url']}): {story['name']}"
             click.secho(f" * {title}", fg="green")
 
             for pr in story["prs"]:
-                repo = rget(pr, "head.repo.name","")
+                repo = rget(pr, "head.repo.name", "")
                 title = f"   * [#{repo}/{pr.get('number')}]({pr.get('html_url')}): {pr.get('title')}"
                 click.secho(f"{title}", fg="blue")
 
         if len(report["misc_prs"]):
             click.secho(f" * Misc PRs", fg="green")
             for pr in report["misc_prs"]:
-                repo = rget(pr, "head.repo.name","")
+                repo = rget(pr, "head.repo.name", "")
                 title = f"   * [#{repo}/{pr.get('number')}]({pr.get('html_url')}): {pr.get('title')}"
                 click.secho(f"{title}", fg="blue")
 
 
-story_re = re.compile(r'(?P<story_id>\bch\d+\b)')
+story_re = re.compile(r"(?P<story_id>\bch\d+\b)")
 link_re = re.compile(r'<(?P<link>[^>]+)> *; *rel= *"(?P<relationship>[^"]+)"')
 
 
 def empty_report():
     return {
-        'stories':collections.defaultdict(lambda: {'prs':[]}),
-        'misc_prs':[],
-        'total_prs':0,
-        'total_stories':0
+        "stories": collections.defaultdict(lambda: {"prs": []}),
+        "misc_prs": [],
+        "total_prs": 0,
+        "total_stories": 0,
     }
 
 
@@ -291,7 +320,7 @@ def rget(d, path, default=None):
         paths = path.split(".")
     else:
         paths = path
-    subd = d.get(paths[0],{})
+    subd = d.get(paths[0], {})
     if not subd:
         return default
     elif len(paths) == 1:
@@ -318,8 +347,12 @@ def hit_ch(opts, api=None, uri=None, data={}, method="GET"):
         params = None
         data = data
 
-    resp = requests.request(method, uri, params=params, data=data,
-        headers={"Clubhouse-Token":opts.ch_token}
+    resp = requests.request(
+        method,
+        uri,
+        params=params,
+        data=data,
+        headers={"Clubhouse-Token": opts.ch_token},
     )
     logger.info("Clubhouse response: %s", resp)
     resp.raise_for_status()
@@ -329,10 +362,10 @@ def hit_ch(opts, api=None, uri=None, data={}, method="GET"):
 
 def hit_gh(opts, api=None, uri=None, data={}, method="GET"):
     """
-        hack around pygithub's request-happy architecture
+    hack around pygithub's request-happy architecture
 
-        NOTE: this will return an iterator even if there's only
-        one json object response.
+    NOTE: this will return an iterator even if there's only
+    one json object response.
     """
     assert api or uri, "Either an api or a uri should be passed"
 
@@ -351,46 +384,58 @@ def hit_gh(opts, api=None, uri=None, data={}, method="GET"):
         params = None
         data = data
 
-    resp = requests.request(method, uri, params=params, data=data,
-        headers={"Authorization":f"Token {opts.gh_token}"}
+    resp = requests.request(
+        method,
+        uri,
+        params=params,
+        data=data,
+        headers={"Authorization": f"Token {opts.gh_token}"},
     )
     logger.info("Github response: %s", resp)
     resp.raise_for_status()
 
     res = resp.json()
 
-    if res.get("items",[]):
+    if res.get("items", []):
         links = {}
         logger.info("Links %s", resp.headers.get("Link"))
 
-        for uri, rel in link_re.findall(resp.headers.get("Link","")):
+        for uri, rel in link_re.findall(resp.headers.get("Link", "")):
             logger.debug("Links %s -> %s", rel, uri)
             links[rel] = uri
 
-        items = resp.json().get("items",[])
+        items = resp.json().get("items", [])
         logger.info("Got %s PRs", len(items))
 
         for item in items:
-            #logger.debug("Yielding %s", item)
+            # logger.debug("Yielding %s", item)
             yield item
 
         if method == "GET" and links.get("next"):
-            for item in hit_gh(opts, api, uri=links.get("next"), data=data, method=method):
+            for item in hit_gh(
+                opts, api, uri=links.get("next"), data=data, method=method
+            ):
                 yield item
     else:
         yield res
 
 
 def init_gh(opts):
-    '''
+    """
     Return a tuple of a github client, and a Team object
-    '''
+    """
     if not opts.gh_token:
-        raise RuntimeError("A github token is required. Use --gh-token option or GH_TOKEN env var")
+        raise RuntimeError(
+            "A github token is required. Use --gh-token option or GH_TOKEN env var"
+        )
     if not opts.gh_team:
-        raise RuntimeError("A github team is required. Use the --gh-team option or GH_TEAM env var")
+        raise RuntimeError(
+            "A github team is required. Use the --gh-team option or GH_TEAM env var"
+        )
     if not opts.gh_org:
-        raise RuntimeError("A github org is required. Use the --gh-org option or GH_ORG env var")
+        raise RuntimeError(
+            "A github org is required. Use the --gh-org option or GH_ORG env var"
+        )
 
     logger.info(f"Initing GitHub w/ {opts}")
     gh = github.Github(opts.gh_token)
