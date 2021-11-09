@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "githouse"
-version = "0.1.0"
+version = "0.3.3"
 description = "cli to generate a markdown report for recent employee updates"
 authors = ["Stephen Layland <slayland@tubi.tv>"]
 

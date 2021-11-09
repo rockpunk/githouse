@@ -245,7 +245,7 @@ def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **k
 
             m = story_re.search(branch)
             if m:
-                story_id = m.group("story_id").strip("ch")
+                story_id = m.group("story_id").strip("chsc-")
                 story = hit_ch(opts, api=f"stories/{story_id}")
 
                 if story_id not in report["stories"]:
@@ -255,6 +255,8 @@ def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **k
                 report["misc_prs"].append(pr_obj)
 
         # store the last user's report
+        report["start_date"] = start_date
+        report["end_date"] = end_date
         report["total_stories"] = len(report["stories"])
         report["total_prs"] = sum(
             [len(v["prs"]) for k, v in report["stories"].items()]
@@ -271,6 +273,8 @@ def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **k
             report = json.load(f)
             user_report = report["report"]
             members = report["members"]
+            start_date = report["start_date"]
+            end_date = report["end_date"]
 
     pretty_team = re.sub(r"[_-]+", " ", opts.gh_team).title()
 
@@ -302,7 +306,7 @@ def report(ctx, opts, start_date, end_date, state, filename, outfile, *args, **k
                 click.secho(f"{title}", fg="blue")
 
 
-story_re = re.compile(r"(?P<story_id>\bch\d+\b)")
+story_re = re.compile(r"(?P<story_id>\b(?:ch|sc)-?\d+\b)")
 link_re = re.compile(r'<(?P<link>[^>]+)> *; *rel= *"(?P<relationship>[^"]+)"')
 
 
